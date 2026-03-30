@@ -1,0 +1,8 @@
+{
+  "json": {
+    "command": "npx",
+    "args": [
+      "@gongrzhe/server-json-mcp@1.0.3"
+    ]
+  }
+}
