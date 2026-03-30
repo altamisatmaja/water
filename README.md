@@ -23,12 +23,6 @@ No cloud. No account. No telemetry. Everything stays on your machine.
 Claude Code Agent  →  Water Hook  →  DuckDB (.water/)  →  Dashboard (localhost:3141)
 ```
 
-<div align="center">
-  <img src="assets/water-icon.svg" alt="Water Dashboard Preview" width="640" />
-</div>
-
----
-
 ## Quick Start
 
 ### Install
