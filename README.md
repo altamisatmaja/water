@@ -1,7 +1,5 @@
 <div align="center">
-  <img src="assets/water-icon.svg" alt="Water" width="96" height="96" />
-  
-  # Water 💧
+  <img src="assets/water-icon.svg" alt="Water"  height="128" />
 
   **Visual brain of MCP agents** — understand knowledge retention, reasoning paths, and token flow.
 
