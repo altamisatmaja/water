@@ -1,0 +1,10 @@
+{
+  "anthropic_api_key": "",
+  "db_path": ".water",
+  "embedding_mode": "local",
+  "enable_analytics": false,
+  "enable_websocket": true,
+  "host": "127.0.0.1",
+  "log_level": "info",
+  "port": 3141
+}

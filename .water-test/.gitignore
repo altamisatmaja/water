@@ -1,0 +1,3 @@
+database.duckdb
+database.duckdb.wal
+events.jsonl

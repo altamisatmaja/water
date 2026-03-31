@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 
 	"github.com/spf13/cobra"
+	"github.com/water-viz/water/internal/claude"
 	"github.com/water-viz/water/internal/config"
 	"github.com/water-viz/water/internal/graph"
 	"github.com/water-viz/water/internal/logger"
@@ -19,6 +20,8 @@ var initCmd = &cobra.Command{
 		host, _ := cmd.Flags().GetString("host")
 		port, _ := cmd.Flags().GetInt("port")
 		embeddingMode, _ := cmd.Flags().GetString("embedding-mode")
+		claudeProjectQuery, _ := cmd.Flags().GetString("claude-project")
+		claudeProjectsPath, _ := cmd.Flags().GetString("claude-projects-path")
 
 		if err := os.MkdirAll(dbPath, 0o755); err != nil {
 			return fmt.Errorf("mkdir %s: %w", dbPath, err)
@@ -38,6 +41,16 @@ var initCmd = &cobra.Command{
 			EnableWebSocket: true,
 			EnableAnalytics: false,
 		}
+
+		if store, err := claude.NewStore(claudeProjectsPath); err == nil {
+			cwd, _ := os.Getwd()
+			if projectRef, err := store.ResolveProject(claudeProjectQuery, cwd); err == nil {
+				cfg.ClaudeProjectsPath = store.ProjectsRoot()
+				cfg.ClaudeProjectKey = projectRef.Key
+				cfg.ClaudeProjectPath = projectRef.Path
+			}
+		}
+
 		cfgPath := config.GetConfigPath(dbPath)
 		if err := cfg.Save(cfgPath); err != nil {
 			return fmt.Errorf("save config: %w", err)
@@ -55,7 +68,15 @@ var initCmd = &cobra.Command{
 
 		logger.Info("initialized", "db_path", dbPath)
 		fmt.Printf("✓ Water initialized at %s\n", dbPath)
-		fmt.Printf("  Next: water serve --db-path %s\n", dbPath)
+		if cfg.ClaudeProjectKey != "" {
+			fmt.Printf("✓ Linked Claude project: %s\n", cfg.ClaudeProjectKey)
+		} else {
+			fmt.Printf("! No Claude project auto-linked. Re-run with --claude-project <name> if needed.\n")
+		}
+		fmt.Printf("  Next: water history --db-path %s\n", dbPath)
+		fmt.Printf("        water memo --db-path %s\n", dbPath)
+		fmt.Printf("        water brain --db-path %s\n", dbPath)
+		fmt.Printf("        water serve --db-path %s\n", dbPath)
 		return nil
 	},
 }
@@ -66,4 +87,6 @@ func init() {
 	initCmd.Flags().String("host", "127.0.0.1", "Bind host")
 	initCmd.Flags().Int("port", 3141, "HTTP port")
 	initCmd.Flags().String("embedding-mode", "local", "Embedding mode: local|api")
+	initCmd.Flags().String("claude-project", "", "Claude project name, key, or path to link")
+	initCmd.Flags().String("claude-projects-path", claude.DefaultProjectsRoot(), "Path to ~/.claude/projects")
 }

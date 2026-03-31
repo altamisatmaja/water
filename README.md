@@ -6,7 +6,7 @@
   [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](./LICENSE)
   [![Go Version](https://img.shields.io/badge/go-1.22+-00ADD8?logo=go&logoColor=white)](https://go.dev)
   [![Status](https://img.shields.io/badge/status-Alpha-yellow)]()
-  [![GitHub Stars](https://img.shields.io/github/stars/water-viz/water?style=flat)](https://github.com/water-viz/water/stargazers)
+  [![GitHub Stars](https://img.shields.io/github/stars/altamisatmaja/water?style=flat)](https://github.com/altamisatmaja/water/stargazers)
 
   [Quick Start](#quick-start) · [Features](#features) · [Architecture](#architecture) · [CLI Reference](#cli-reference) · [Contributing](#contributing)
 </div>
@@ -27,24 +27,67 @@ Claude Code Agent  →  Water Hook  →  DuckDB (.water/)  →  Dashboard (local
 
 ### Install
 
-**macOS / Linux (Homebrew)**
+**Clone the repository**
 ```bash
-brew tap water-viz/water https://github.com/water-viz/homebrew-water
-brew install water
-```
-
-**From source**
-```bash
-git clone https://github.com/water-viz/water.git
+git clone https://github.com/altamisatmaja/water
 cd water
-make build
-./bin/water --help
 ```
 
-**Windows (Scoop — coming soon)**
+**Install the `water` command from this clone**
+
+After `cd water`, run:
+
+**macOS / Linux**
+```bash
+go run ./cmd/water install
+```
+
+**Windows (PowerShell)**
 ```powershell
-scoop bucket add water https://github.com/water-viz/scoop-water
-scoop install water
+go run ./cmd/water install
+```
+
+What `water install` does:
+- builds `bin/water` (or `bin/water.exe` on Windows)
+- creates a user-level symlink/shim so you can run `water`, `water --help`, and `water serve`
+- tells you how to add the command directory to PATH if needed
+- on macOS, it prints the `~/.zshrc` `export PATH=...` command when required
+
+Open a new terminal after install, then verify:
+
+```bash
+water --help
+```
+
+If you move the cloned repository later, run `go run ./cmd/water install` again from the new location so the user-level symlink/shim points to the correct binary.
+
+Example install output:
+
+```text
+✓ Water install complete
+
+Repository:
+  /path/to/water
+
+Built binary:
+  /path/to/water/bin/water
+
+Command shim:
+  /Users/you/.local/bin/water
+
+PATH:
+  Add this directory to PATH:
+    /Users/you/.local/bin
+
+  Run this command in your terminal:
+    echo 'export PATH="/Users/you/.local/bin:$PATH"' >> ~/.zshrc
+
+  Then open a new terminal and run:
+    water --help
+
+Next:
+  water --help
+  water serve
 ```
 
 ### Run
@@ -94,41 +137,9 @@ The dashboard updates in real time via WebSocket as your agent runs. No refresh 
 
 ---
 
-## Architecture
-
-```
-┌─────────────────────────────────────────────────────────┐
-│                   Claude Code Agent                     │
-└────────────────────────┬────────────────────────────────┘
-                         │ SDK hook (intercepts API calls)
-                         ▼
-┌─────────────────────────────────────────────────────────┐
-│              Event Capture  (.water/events.jsonl)       │
-│   mcp_tool_call │ context_window │ decision │ error     │
-└────────────────────────┬────────────────────────────────┘
-                         │
-                         ▼
-┌─────────────────────────────────────────────────────────┐
-│            DuckDB  (.water/database.duckdb)             │
-│   knowledge_nodes │ edges │ reasoning_traces │ metrics  │
-└────────────────────────┬────────────────────────────────┘
-                         │
-              ┌──────────┴──────────┐
-              │  Graph Analysis     │
-              │  KNN  │  Louvain    │
-              │  Salience Decay     │
-              └──────────┬──────────┘
-                         │ HTTP + WebSocket
-                         ▼
-┌─────────────────────────────────────────────────────────┐
-│         Web Dashboard  (localhost:3141)                 │
-│   Cytoscape.js graph │ Timeline │ Metrics │ Traces      │
-└─────────────────────────────────────────────────────────┘
-```
-
 **Tech stack:**
 - **Backend**: Go 1.22, Cobra CLI, DuckDB (embedded), standard `net/http`
-- **Frontend**: Svelte 4, Cytoscape.js, Tailwind CSS, Chart.js
+- **Frontend**: embedded dashboard + Three.js 3D knowledge graph
 - **Embeddings**: `all-minilm-l6-v2` via ONNX Runtime (local, no API key needed)
 - **Distribution**: Single static binary — frontend embedded via `//go:embed`
 
@@ -137,49 +148,20 @@ The dashboard updates in real time via WebSocket as your agent runs. No refresh 
 ## CLI Reference
 
 ```bash
+water install           # Build from this clone and install a user-level command shim
 water init              # Initialize .water/ in current project
 water serve             # Start dashboard at http://localhost:3141
-water watch             # Live event tail in terminal (TUI)
-water export [format]   # Export snapshot: json | csv | parquet
-water config [key]      # Get or set a config value
-water install           # Register as background service (macOS / Linux)
+water watch             # Live event tail in terminal
+water history           # Show Claude session history
+water memo              # Show Claude memory files
+water brain             # Print a local Claude project summary
 ```
 
 **Common flags:**
 
 | Flag | Default | Description |
 |------|---------|-------------|
-| `--db-path` | `.water` | Path to the `.water` directory |
-| `--port` | `3141` | Web server port |
-| `--host` | `127.0.0.1` | Bind address |
 | `--open-browser` | `true` | Auto-open dashboard on `serve` |
-| `--embedding-mode` | `local` | `local` (ONNX) or `api` (Anthropic) |
-
----
-
-## Configuration
-
-Water stores its config in `.water/config.json` (created by `water init`):
-
-```json
-{
-  "db_path": ".water",
-  "host": "127.0.0.1",
-  "port": 3141,
-  "embedding_mode": "local",
-  "log_level": "info",
-  "enable_websocket": true
-}
-```
-
-**Environment variable overrides:**
-
-```bash
-ANTHROPIC_API_KEY    # For Anthropic embeddings (optional)
-WATER_DB_PATH        # Override .water directory path
-WATER_PORT           # Override port
-WATER_LOG_LEVEL      # debug | info | warn | error
-```
 
 ---
 
@@ -232,37 +214,9 @@ water/
 | OS | macOS 10.15+, Linux (any), Windows 10+ |
 | RAM | 2 GB |
 | Disk | 500 MB (for binary + database) |
-| Go | 1.22+ *(build from source only)* |
+| Go | 1.23+ *(required for `go run ./cmd/water install`)* |
 
 No Node.js required to run Water — the frontend is pre-built and embedded in the binary.
-
----
-
-## Roadmap
-
-### ✅ Phase 1 — MVP (Week 1–3)
-- `water init` + `water serve`
-- DuckDB storage (nodes, edges, traces)
-- Basic Cytoscape.js graph visualization
-- Homebrew distribution
-
-### 🔨 Phase 2 — Intelligence (Week 4–6)
-- Local embeddings (`all-minilm-l6-v2` via ONNX)
-- KNN edge creation (k=5, cosine similarity)
-- Louvain community detection
-- Salience decay curves
-- Token efficiency metrics + Chart.js dashboard
-
-### 🚀 Phase 3 — Integration (Week 7–8)
-- Official Anthropic SDK hook (`anthropic-sdk-go`)
-- VSCode extension
-- Team collaboration (snapshot sharing)
-- Multi-agent visualization
-
-### 🌐 Phase 4 — Scale (Q3 2026)
-- PostgreSQL backend option (for team servers)
-- Optional cloud export
-- Plugin ecosystem
 
 ---
 
@@ -287,35 +241,9 @@ make test
 make build
 
 # Try it
-./bin/water init --db-path .water-dev
-./bin/water serve --db-path .water-dev
+./bin/water init
+./bin/water serve
 ```
-
-### What we need
-
-- **Go developers** — backend, graph algorithms, CLI
-- **Svelte / TypeScript developers** — dashboard UI, Cytoscape.js
-- **DevOps** — cross-platform builds, Docker, Homebrew
-- **Beta testers** — run Water on a real project and share feedback
-
-### Branch naming
-
-```
-feature/my-feature
-bugfix/fix-description
-docs/improve-readme
-test/add-integration-tests
-```
-
-### Commit style
-
-```
-feat: add salience decay to edge rendering
-fix: resolve DuckDB concurrent write panic
-docs: update CLI reference in README
-```
-
-See [CONTRIBUTING.md](./CONTRIBUTING.md) for the full guide.
 
 ---
 
