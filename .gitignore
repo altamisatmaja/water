@@ -1,1 +1,26 @@
 __pycache__
+.DS_Store
+*.log
+
+# Local Water runtime state
+.water/**/database.duckdb
+.water/**/database.duckdb.wal
+.water/**/events.jsonl
+.water-demo/**/database.duckdb
+.water-demo/**/database.duckdb.wal
+.water-demo/**/events.jsonl
+.water-final-demo/**/database.duckdb
+.water-final-demo/**/database.duckdb.wal
+.water-final-demo/**/events.jsonl
+.water-test/**/database.duckdb
+.water-test/**/database.duckdb.wal
+.water-test/**/events.jsonl
+
+# Local build outputs
+bin/
+dist/
+build/
+
+# Editor / OS noise
+.idea/
+.vscode/

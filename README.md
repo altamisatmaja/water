@@ -13,7 +13,10 @@
 
 ---
 
+
 ## What is Water?
+
+<img src="assets/dashboard.png" alt="Water"  height="256" />
 
 Water is a **lightweight, self-hosted visualization tool** for Claude Code agents and MCP-based systems. It captures everything your agent does and turns it into an interactive knowledge graph you can explore in your browser.
 
