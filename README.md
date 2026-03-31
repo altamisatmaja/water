@@ -22,10 +22,6 @@ Water is a **lightweight, self-hosted visualization tool** for Claude Code agent
 
 No cloud. No account. No telemetry. Everything stays on your machine.
 
-```
-Claude Code Agent  →  Water Hook  →  DuckDB (.water/)  →  Dashboard (localhost:3141)
-```
-
 ## Quick Start
 
 ### Install
